@@ -1,0 +1,15 @@
+FragmentsUnreal
+Copyright 2026 Jairo Andres Basto Picott and Arkoun Merchant
+
+This distribution includes third-party components. Their original license
+notices remain with the corresponding source files:
+
+* libtess2 is distributed under the SGI Free Software License B, Version 2.0.
+  See ThirdParty/libtess2/Source and ThirdParty/libtess2/Include.
+* FlatBuffers is included under its upstream license and notices where
+  applicable. See ThirdParty/FlatBuffers.
+* zlib is provided by and licensed through the Unreal Engine installation.
+
+The Apache License in the root LICENSE file applies to original FragmentsUnreal
+code, documentation, and project-authored assets unless a file or directory
+carries a different notice.

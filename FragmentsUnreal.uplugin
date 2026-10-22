@@ -1,0 +1,50 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "FragmentsUnreal",
+	"Description": "OpenBIM and IFC Fragment 2.0 streaming importer for Unreal Engine.",
+	"Category": "AECO",
+	"CreatedBy": "Jairo Andres Basto Picott and Arkoun Merchant",
+	"CreatedByURL": "",
+	"DocsURL": "https://www.fragmentsunreal.dev/docs/",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "FragmentsUnreal",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"ProceduralMeshComponent",
+				"GeometryScriptingCore",
+				"GeometryCore"
+			]
+		},
+		{
+			"Name": "FragmentsEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PostEngineInit"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "ProceduralMeshComponent",
+			"Enabled": true
+		},
+		{
+			"Name": "GeometryScripting",
+			"Enabled": true
+		}
+	],
+	"Content": [
+		{
+			"Path": "Content/Materials",
+			"FolderName": "Materials"
+		}
+	],
+	"IsExperimentalVersion": false
+}
