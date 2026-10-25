@@ -52,9 +52,11 @@ Targets Unreal Engine 5.4 and later. No Nanite required.
 
 FragmentsUnreal reads `.frag`, not `.ifc`. To convert an IFC model:
 
-- **[ifc2frag](https://github.com/fragever/ifc2frag)**: our small web app built on
-  That Open's libraries. Run it locally (`npm install`, then `npm run dev`), open
-  the page, upload your `.ifc`, and download the `.frag`.
+- **[FragmentsUnreal Viewer](https://www.fragmentsunreal.dev/viewer/)**: open your
+  `.ifc` in the browser, check it, and download the `.frag`. The file is processed
+  in your browser and never uploaded.
+- **[ifc2frag](https://github.com/fragever/ifc2frag)**: the viewer's source, if you
+  want to run it locally (`npm install`, then `npm run dev`).
 - Or use That Open's Fragments tooling directly: see
   [docs.thatopen.com](https://docs.thatopen.com/).
 
@@ -73,8 +75,8 @@ one C++ class first (Tools → New C++ Class) so Unreal creates a build target.
 2. Close the editor, right-click your `.uproject`, choose **Generate Visual
    Studio project files**, and build **Development Editor / Win64**.
 3. Open the project and enable **FragmentsUnreal** in Edit → Plugins.
-4. Open **Window → Fragments Viewer**, pick a `.frag` file, and click
-   **Load Fragment**.
+4. Open **Window → Fragments Viewer** in the editor, pick a `.frag` file, and
+   click **Load Fragment**.
 
 The [getting started guide](https://www.fragmentsunreal.dev/docs/getting-started)
 walks through each step with screenshots, plus the Blueprint runtime path.
