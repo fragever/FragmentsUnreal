@@ -4,7 +4,7 @@
 #include "Importer/FragmentModelWrapper.h"
 #include "Utils/FragmentsUtils.h"
 #include "Utils/FragmentOcclusionClassifier.h"
-#include "Index/index_generated.h"
+#include "Index/FragmentsSchema.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogFragmentRegistry, Log, All);
 

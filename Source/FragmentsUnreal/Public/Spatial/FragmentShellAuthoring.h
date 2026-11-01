@@ -2,7 +2,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Index/index_generated.h"
+#include "Index/FragmentsSchema.h"
 
 struct FMeshDescription;
 struct FFragmentMeshData;

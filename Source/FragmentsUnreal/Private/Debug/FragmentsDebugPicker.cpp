@@ -6,6 +6,7 @@
 #include "Components/InputComponent.h"
 #include "Components/SceneComponent.h"
 #include "Engine/GameInstance.h"
+#include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "HAL/PlatformFileManager.h"
@@ -16,13 +17,14 @@
 #include "Misc/Paths.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
+#include "Policies/CondensedJsonPrintPolicy.h"
 
 #include "Fragment/Fragment.h"
 #include "Importer/FragmentsImporter.h"
 #include "Importer/FragmentsImporterSubsystem.h"
 #include "Importer/FragmentModelWrapper.h"
 #include "Utils/FragmentsUtils.h"
-#include "Index/index_generated.h"
+#include "Index/FragmentsSchema.h"
 
 // Disambiguate from Unreal's UMaterial — FlatBuffers struct lives at root namespace.
 using FBMaterial = ::Material;

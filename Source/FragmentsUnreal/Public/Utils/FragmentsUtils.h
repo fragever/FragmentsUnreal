@@ -6,10 +6,12 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "Index/index_generated.h"
+#include "Index/FragmentsSchema.h"
 #include "Utils/FragmentsLog.h"
 #include "Utils/FragmentCellPartition.h"
 #include "FragmentsUtils.generated.h"
+
+class UMaterialInterface;
 
 struct FFragmentEdge
 {
@@ -257,16 +259,16 @@ struct FItemAttribute
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Fragments")
 	FString Key;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Fragments")
 	FString Value;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Fragments")
 	FString PropertySet;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "Fragments")
 	int64 TypeHash;
 
 	FItemAttribute() : Key(TEXT("")), Value(TEXT("")), PropertySet(TEXT("")), TypeHash(0) {}

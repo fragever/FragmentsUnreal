@@ -29,11 +29,11 @@ class FRAGMENTSEDITOR_API UFragmentsImporterEditorSubsystem : public UEditorSubs
 
 public:
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	FString LoadFragment(const FString& FragPath,
 		EFragmentOriginMode OriginMode = EFragmentOriginMode::UseWorldOrigin);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	bool LoadAndProcessFragmentForEditor(const FString& FragPath,
 		EFragmentOriginMode OriginMode,
 		FString& OutErrorMessage);
@@ -44,43 +44,43 @@ public:
 	/** A batch's loading dialog was cancelled with files still to load: one notice saying how many. */
 	void ReportLoadingStopped(int32 FilesNotLoaded);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	void UnloadFragment(const FString& ModelGuid);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	void ProcessLoadedFragment(const FString& InModelGuid, AActor* InOwnerRef, bool bInSaveMesh,
 		FOnProcessLoadedFragmentComplete OnComplete,
 		AFragment* BucketRoot = nullptr);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	void ProcessLoadedFragmentItem(int64 InLocalId, const FString& InModelGuid, AActor* InOwnerRef, bool bInSaveMesh,
 		AFragment* BucketRoot = nullptr);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	TArray<int64> GetElementsByCategory(const FString& InCategory, const FString& ModelGuid);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	AFragment* GetItemByLocalId(int64 InLocalId, const FString& InModelGuid);
 
 	FFragmentItem* GetFragmentItemByLocalId(int64 InLocalId, const FString& InModelGuid);
 	void GetItemData(FFragmentItem* InFragmentItem);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	TArray<FItemAttribute> GetItemPropertySets(int64 LocalId, const FString& InModelGuid);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	TArray<FItemAttribute> GetItemAttributes(int64 LocalId, const FString& InModelGuid);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	AFragment* GetModelFragment(const FString& InModelGuid);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	FTransform GetBaseCoordinates();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	void ResetBaseCoordinates();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments|Editor")
 	bool IsFragmentLoaded(const FString& InModelGuid);
 
 	FORCEINLINE const TMap<FString, class UFragmentModelWrapper*>& GetFragmentModels() const

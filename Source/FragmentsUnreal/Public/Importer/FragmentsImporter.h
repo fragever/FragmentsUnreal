@@ -6,9 +6,11 @@
 
 #include "CoreMinimal.h"
 #include "HAL/CriticalSection.h"
+#include "Misc/AutomationTest.h"
+#include "Engine/World.h"
 #include "Tasks/Task.h"
 #include "UObject/NoExportTypes.h"
-#include "Index/index_generated.h"
+#include "Index/FragmentsSchema.h"
 #include "Utils/FragmentsUtils.h"
 #include "Spatial/FragmentProxyDecimate.h"
 #include "Spatial/FragmentProxyTiers.h"
@@ -23,6 +25,8 @@
 #include "Materials/MaterialInstanceConstant.h"
 #include "Fragment/Fragment.h"
 #include "FragmentsImporter.generated.h"
+
+class UStaticMeshDescription;
 
 // Forward Declarations
 class UFragmentModelWrapper;

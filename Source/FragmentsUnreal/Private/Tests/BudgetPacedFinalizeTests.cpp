@@ -1,6 +1,7 @@
 // Copyright 2026 Jairo Andres Basto Picott and Arkoun Merchant
 
 #include "Misc/AutomationTest.h"
+#include "Engine/StaticMesh.h"
 #include "Utils/FrameBudgetCoordinator.h"
 #include "Importer/FragmentsImporter.h"
 
