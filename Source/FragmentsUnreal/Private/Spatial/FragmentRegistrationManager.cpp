@@ -2,6 +2,8 @@
 
 #include "Spatial/FragmentRegistrationManager.h"
 #include "Fragment/Fragment.h"
+#include "Engine/GameViewportClient.h"
+#include "UnrealClient.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Utils/FragmentsLog.h"

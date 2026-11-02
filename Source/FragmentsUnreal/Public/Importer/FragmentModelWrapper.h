@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "Index/index_generated.h"
+#include "Index/FragmentsSchema.h"
 #include "Materials/MaterialInterface.h"
 #include "Utils/FragmentsUtils.h"
 #include "Spatial/FragmentRegistry.h"

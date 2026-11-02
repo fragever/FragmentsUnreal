@@ -40,33 +40,33 @@ public:
 		const FFragmentLoadOptions& Options);
 
 	/** Load a Fragment model without blocking the game thread. */
-	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Options"))
+	UFUNCTION(BlueprintCallable, Category = "Fragments", meta = (AutoCreateRefTerm = "Options"))
 	void LoadFragmentAsync(const FString& FragPath,
 		const FFragmentLoadOptions& Options,
 		FOnFragmentLoadComplete OnComplete);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments")
 	void UnloadFragment(const FString& ModelGuid);
 
 	/** Process a Loaded Fragment model using ModelGuid. */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments")
 	void ProcessLoadedFragment(const FString& InModelGuid, AActor* InOwnerRef, bool bInSaveMesh, FOnProcessLoadedFragmentComplete OnComplete,
 		AFragment* BucketRoot = nullptr);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments")
 	void ProcessLoadedFragmentItem(int64 InLocalId, const FString& InModelGuid, AActor* InOwnerRef, bool bInSaveMesh,
 		AFragment* BucketRoot = nullptr);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments")
 	TArray<int64> GetElementsByCategory(const FString& InCategory, const FString& ModelGuid);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments")
 	AFragment* GetItemByLocalId(int64 InLocalId, const FString& InModelGuid);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments")
 	TArray<FItemAttribute> GetItemPropertySets(int64 LocalId, const FString& InModelGuid);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments")
 	TArray<FItemAttribute> GetItemAttributes(int64 LocalId, const FString& InModelGuid);
 
 	/** Get basic element identity by LocalId. Returns struct with LocalId=-1 if not found. */
@@ -91,7 +91,7 @@ public:
 	FFragmentItem* GetFragmentItemByLocalId(int64 InLocalId, const FString& InModelGuid);
 	void GetItemData(FFragmentItem* InFragmentItem);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments")
 	AFragment* GetModelFragment(const FString& InModelGuid);
 
 	/** Get the importer instance (owns import, and the LOD2 proxy / LOD1 cell-merge builds). */
@@ -165,10 +165,10 @@ public:
 	/** Console handler for Fragments.DumpAttributesByCategory. Args: <Category> [ModelGuid]. */
 	static void HandleDumpAttributesByCategoryCommand(const TArray<FString>& Args, UWorld* World);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments")
 	FTransform GetBaseCoordinates();
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Fragments")
 	void ResetBaseCoordinates();
 
 	FORCEINLINE const TMap<FString, class UFragmentModelWrapper*>& GetFragmentModels() const

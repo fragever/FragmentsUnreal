@@ -2,13 +2,13 @@
 
 #include "Importer/FragmentsImporterSubsystem.h"
 #include "EngineUtils.h"
-#include "Engine/StaticMesh.h"
+#include "Engine/GameInstance.h"
 #include "Fragment/Fragment.h"
 #include "Importer/FragmentsImporter.h"
 #include "Importer/FragmentModelWrapper.h"
 #include "Utils/FragmentsUtils.h"
 #include "Utils/FragmentsLog.h"
-#include "Index/index_generated.h"
+#include "Index/FragmentsSchema.h"
 #include "Spatial/FragmentRegistrationManager.h"
 
 static FAutoConsoleCommandWithWorldAndArgs GFragmentsDumpCategoriesCmd(

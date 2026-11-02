@@ -2,6 +2,7 @@
 #include "Misc/AutomationTest.h"
 #include "Importer/FragmentsImporter.h"
 #include "Importer/FragmentsImporterSubsystem.h"
+#include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Engine/GameInstance.h"
 #include "Misc/ScopeExit.h"

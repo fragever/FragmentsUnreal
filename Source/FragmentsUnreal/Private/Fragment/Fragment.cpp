@@ -3,6 +3,7 @@
 
 
 #include "Fragment/Fragment.h"
+#include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Importer/FragmentsImporterSubsystem.h"
 #include "Importer/FragmentsImporter.h"

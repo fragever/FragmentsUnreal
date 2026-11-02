@@ -20,6 +20,19 @@ Initial open-source release.
   edits; non-modal import progress with failure notifications; material
   drag-and-drop and live placement fields in the Fragments panel.
 
+### Packaging
+
+- Builds without a shared precompiled header, so Blueprint-only projects can
+  package a game with the plugin and `RunUAT BuildPlugin` succeeds on UE 5.4 to
+  5.8. Every header includes or forward-declares what it uses, and the
+  FlatBuffers schema is included through `Index/FragmentsSchema.h`, which keeps
+  its global type names (`Transform`, `Material`, ...) from breaking engine
+  headers parsed after it.
+- Every Blueprint-exposed function and property has a `Category`, which
+  `BuildPlugin` and Fab require.
+- `Config/FilterPlugin.ini` ships `ThirdParty/` (FlatBuffers headers, libtess2),
+  `LICENSE` and `NOTICE` with packaged builds.
+
 ### Removed
 
 The click-driven activation API from the pre-release `main` branch is gone;
