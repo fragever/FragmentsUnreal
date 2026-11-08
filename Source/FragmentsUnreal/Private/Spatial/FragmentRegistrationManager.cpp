@@ -1,6 +1,7 @@
 // Copyright 2026 Jairo Andres Basto Picott and Arkoun Merchant
 
 #include "Spatial/FragmentRegistrationManager.h"
+#include "Spatial/FragmentCollisionCook.h"
 #include "Fragment/Fragment.h"
 #include "Engine/GameViewportClient.h"
 #include "UnrealClient.h"
@@ -1509,15 +1510,21 @@ void UFragmentRegistrationManager::UpdateRegistration(
 				ModelData.CollisionCookProgress = -1;
 				UE_LOG(LogFragments, Verbose, TEXT("[Collision] Cancelled in-progress cook (camera left cook zone)"));
 			}
-			else if (ModelData.bCollisionCooked && DistToBox > UncookPadding)
+			else if (ModelData.bCollisionCooked)
 			{
-				// Camera exited uncook zone — start or check cooldown
-				if (ModelData.CollisionUncookEligibleTime == 0.0f)
+				// Out of the uncook distance: start the cooldown, then uncook when it runs out. A promoted model is being
+				// inspected and must stay clickable at any distance: never uncooked, a pending cooldown cancelled (#4).
+				const UE::Fragments::CollisionCook::EUncookStep Step = UE::Fragments::CollisionCook::NextUncookStep(
+					ModelData.bPromoteOverride, DistToBox, UncookPadding, ModelData.CollisionUncookEligibleTime, NowSeconds);
+				if (Step == UE::Fragments::CollisionCook::EUncookStep::StartCooldown)
 				{
-					// Start cooldown timer
 					ModelData.CollisionUncookEligibleTime = NowSeconds + CollisionCooldownSeconds;
 				}
-				else if (NowSeconds >= ModelData.CollisionUncookEligibleTime)
+				else if (Step == UE::Fragments::CollisionCook::EUncookStep::Cancel)
+				{
+					ModelData.CollisionUncookEligibleTime = 0.0f;
+				}
+				else if (Step == UE::Fragments::CollisionCook::EUncookStep::Uncook)
 				{
 					// Cooldown expired — uncook if budget allows
 					if (CollisionUncookBudgetThisFrame < MaxCollisionUncooksPerFrame)
@@ -1562,12 +1569,6 @@ void UFragmentRegistrationManager::UpdateRegistration(
 							*ModelGuid, ModelData.Components.Num(), ProtectedMeshes.Num());
 					}
 				}
-			}
-			else if (ModelData.bCollisionCooked && DistToBox <= UncookPadding
-				&& ModelData.CollisionUncookEligibleTime != 0.0f)
-			{
-				// Camera returned to uncook zone — cancel pending uncook
-				ModelData.CollisionUncookEligibleTime = 0.0f;
 			}
 		}
 
@@ -1727,8 +1728,10 @@ void UFragmentRegistrationManager::EvaluateOneHISMC(
 	}
 
 	// Spatial collision gating: enable QueryOnly collision only when the camera is within interaction distance.
-	const bool bThisHISMCCooked = ModelData.bCollisionCooked
-		|| (ModelData.CollisionCookProgress > CompIdx);
+	// A promotion's forced collision counts: PromoteAllCellsForModel cooks those bodies itself (#4: it used to wait for
+	// the model to be cooked again, which needs the camera close, so a promoted model stayed with nothing to hit).
+	const bool bThisHISMCCooked = UE::Fragments::CollisionCook::HasCookedBody(ModelData.bCollisionCooked,
+		ModelData.CollisionCookProgress > CompIdx, State.bForceCollision);
 	if (bHasCullDistance)
 	{
 		const float InteractDistance = State.CullDistance * CollisionActivationFraction;
