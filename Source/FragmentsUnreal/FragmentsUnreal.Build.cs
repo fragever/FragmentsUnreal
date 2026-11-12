@@ -66,17 +66,7 @@ public class FragmentsUnreal : ModuleRules
 		// Zlib (Unreal dependency)
         AddEngineThirdPartyPrivateStaticDependencies(Target, "zlib");
 
-		// Platform-specific libtess2 static libs
-        string TessLibPath_Win64 = Path.Combine(ModuleDirectory, "../../ThirdParty/libtess2/Lib/Win64");
-        string TessLibPath_Android = Path.Combine(ModuleDirectory, "../../ThirdParty/libtess2/Lib/Android/ARM64");
-		
-		if (Target.Platform == UnrealTargetPlatform.Win64)
-		{
-			PublicAdditionalLibraries.Add(Path.Combine(TessLibPath_Win64, "tess2.lib"));
-		}
-		else if (Target.Platform == UnrealTargetPlatform.Android)
-		{
-			PublicAdditionalLibraries.Add(Path.Combine(TessLibPath_Android, "libtess2.a"));
-		}
+		// libtess2 is compiled from ThirdParty/libtess2/Source by the wrappers in Private/Tess2, so every platform
+		// (Win64, Linux, Wasm, ...) gets it without a prebuilt library.
     }
 }

@@ -116,12 +116,9 @@ bool FMeshAuthoringMultiSectionTest::RunTest(const FString& Parameters)
 	// Spot-check the first vertex instance's normal carries through the (identity) world transform.
 	TVertexInstanceAttributesRef<FVector3f> InstNormals = Attributes.GetVertexInstanceNormals();
 	TVertexInstanceAttributesRef<FVector2f> InstUVs = Attributes.GetVertexInstanceUVs();
+	// First element without a for/break (Linux clang -Werror rejects -Wunreachable-code-loop-increment).
 	FVertexInstanceID FirstVIID = INDEX_NONE;
-	for (const FVertexInstanceID VIID : MD.VertexInstances().GetElementIDs())
-	{
-		FirstVIID = VIID;
-		break;
-	}
+	if (MD.VertexInstances().Num() > 0) { FirstVIID = *MD.VertexInstances().GetElementIDs().begin(); }
 	TestTrue(TEXT("first vertex instance normal == (0,0,1)"),
 		InstNormals[FirstVIID].Equals(FVector3f(0, 0, 1), 0.01f));
 	TestTrue(TEXT("first vertex instance UV == (0,0)"),
@@ -174,22 +171,14 @@ bool FMeshAuthoringDefaultTangentNoInstanceTest::RunTest(const FString& Paramete
 	FStaticMeshAttributes Attributes(MD);
 	TPolygonGroupAttributesRef<FName> SlotNames = Attributes.GetPolygonGroupMaterialSlotNames();
 	FName FoundSlotName;
-	for (const FPolygonGroupID PGID : MD.PolygonGroups().GetElementIDs())
-	{
-		FoundSlotName = SlotNames[PGID];
-		break;
-	}
+	if (MD.PolygonGroups().Num() > 0) { FoundSlotName = SlotNames[*MD.PolygonGroups().GetElementIDs().begin()]; }
 	TestEqual(TEXT("slot name == ProxySlot_0"), FoundSlotName.ToString(), FString(TEXT("ProxySlot_0")));
 
 	TVertexInstanceAttributesRef<FVector3f> InstTangents = Attributes.GetVertexInstanceTangents();
 	TVertexInstanceAttributesRef<float> InstBinormalSigns = Attributes.GetVertexInstanceBinormalSigns();
 	TVertexInstanceAttributesRef<FVector2f> InstUVs = Attributes.GetVertexInstanceUVs();
 	FVertexInstanceID FirstVIID = INDEX_NONE;
-	for (const FVertexInstanceID VIID : MD.VertexInstances().GetElementIDs())
-	{
-		FirstVIID = VIID;
-		break;
-	}
+	if (MD.VertexInstances().Num() > 0) { FirstVIID = *MD.VertexInstances().GetElementIDs().begin(); }
 	TestTrue(TEXT("first vertex instance tangent == default (1,0,0)"),
 		InstTangents[FirstVIID].Equals(FVector3f(1, 0, 0), 0.01f));
 	TestTrue(TEXT("first vertex instance binormal sign == default +1"),
