@@ -4,6 +4,7 @@
 #include "Spatial/FragmentCollisionCook.h"
 #include "Fragment/Fragment.h"
 #include "Engine/GameViewportClient.h"
+#include "Engine/Engine.h"
 #include "UnrealClient.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
