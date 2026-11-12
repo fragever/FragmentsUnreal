@@ -1,6 +1,7 @@
 // Copyright 2026 Jairo Andres Basto Picott and Arkoun Merchant
 
 #include "Importer/FragmentsImporter.h"
+#include "Engine/Engine.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"

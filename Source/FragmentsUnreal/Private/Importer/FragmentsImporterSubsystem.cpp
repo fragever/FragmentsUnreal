@@ -6,6 +6,8 @@
 #include "Fragment/Fragment.h"
 #include "Importer/FragmentsImporter.h"
 #include "Importer/FragmentModelWrapper.h"
+#include "Importer/FragmentFloorFilter.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "Utils/FragmentsUtils.h"
 #include "Utils/FragmentsLog.h"
 #include "Index/FragmentsSchema.h"
@@ -501,30 +503,25 @@ void UFragmentsImporterSubsystem::SetFloorVisibilityRange(const FString& ModelGu
 
     const TMap<int64, int16>& FloorMap = Wrapper->LocalIdToFloor;
 
+    // Only the instances whose floor flips are written, and (5.4+) as instance updates: no bucket's render state is rebuilt.
+    TRACE_CPUPROFILER_EVENT_SCOPE(Fragments_SetFloorVisibilityRange);
+    TArray<int64> LocalIds;
+    int32 ChangedInstances = 0;
+    int32 ChangedBuckets = 0;
     for (const TPair<FFragBucketKey, UHierarchicalInstancedStaticMeshComponent*>& Pair : BucketRoot->GetBuckets())
     {
         UHierarchicalInstancedStaticMeshComponent* HISMC = Pair.Value;
         if (!IsValid(HISMC)) continue;
 
-        TArray<int64> LocalIds;
         BucketRoot->GetAllLocalIdsForBucket(HISMC, LocalIds);
         if (LocalIds.Num() == 0) continue;
 
-        for (int32 i = 0; i < LocalIds.Num(); i++)
-        {
-            const int64 LocalId = LocalIds[i];
-            int32 FloorNumber = 0;
-            if (const int16* FoundFloor = FloorMap.Find(LocalId))
-            {
-                FloorNumber = (*FoundFloor >= 0) ? static_cast<int32>(*FoundFloor) : 0;
-            }
-
-            const bool bHidden = (FloorNumber < MinFloor || FloorNumber > MaxFloor);
-            HISMC->SetCustomDataValue(i, 1, bHidden ? 1.0f : 0.0f, /*bMarkRenderStateDirty=*/false);
-        }
-
-        HISMC->MarkRenderStateDirty();
+        const int32 Changed = UE::Fragments::FloorFilter::ApplyToBucket(*HISMC, LocalIds, FloorMap, MinFloor, MaxFloor);
+        ChangedInstances += Changed;
+        ChangedBuckets += Changed > 0 ? 1 : 0;
     }
+    UE_LOG(LogFragments, Verbose, TEXT("SetFloorVisibilityRange %s %d..%d: %d instance(s) in %d bucket(s) changed"),
+        *ModelGuid, MinFloor, MaxFloor, ChangedInstances, ChangedBuckets);
 
     // Propagate the filter to merged cells via the registration manager so LOD1/LOD2 proxies hide their contributions for out-of-range floors.
     if (UFragmentsImporter* Imp = GetImporter())
@@ -628,37 +625,37 @@ void UFragmentsImporterSubsystem::SetCategoryFilter(const FString& ModelGuid, co
         }
     }
 
+    // Only the instances whose value changes are written, and (5.4+) as instance updates: no bucket's render state is rebuilt.
+    TRACE_CPUPROFILER_EVENT_SCOPE(Fragments_SetCategoryFilter);
     int32 HISMCount = 0;
     int32 VisibleCount = 0;
     int32 DimmedCount = 0;
+    int32 ChangedInstances = 0;
+    int32 ChangedBuckets = 0;
+    TArray<int64> LocalIds;
     for (const TPair<FFragBucketKey, UHierarchicalInstancedStaticMeshComponent*>& Pair : BucketRoot->GetBuckets())
     {
         UHierarchicalInstancedStaticMeshComponent* HISMC = Pair.Value;
         if (!IsValid(HISMC)) continue;
 
-        TArray<int64> LocalIds;
         BucketRoot->GetAllLocalIdsForBucket(HISMC, LocalIds);
         if (LocalIds.Num() == 0) continue;
 
-        for (int32 i = 0; i < LocalIds.Num(); i++)
+        const int32 Changed = UE::Fragments::FloorFilter::WriteSlot(*HISMC, LocalIds.Num(), [&](int32 i)
         {
-            const int64 LocalId = LocalIds[i];
-            const FString* CategoryPtr = LocalIdToCategory.Find(LocalId);
-            const FString& Category = CategoryPtr ? *CategoryPtr : FString();
-
-            const bool bVisible = VisibleSet.Contains(Category);
-            const float SlotValue = bVisible ? 0.0f : DimmedAlpha;
-            HISMC->SetCustomDataValue(i, 1, SlotValue, /*bMarkRenderStateDirty=*/false);
+            const FString* CategoryPtr = LocalIdToCategory.Find(LocalIds[i]);
+            const bool bVisible = VisibleSet.Contains(CategoryPtr ? *CategoryPtr : FString());
             if (bVisible) ++VisibleCount; else ++DimmedCount;
-        }
-
-        HISMC->MarkRenderStateDirty();
+            return bVisible ? 0.0f : DimmedAlpha;
+        });
+        ChangedInstances += Changed;
+        ChangedBuckets += Changed > 0 ? 1 : 0;
         ++HISMCount;
     }
 
     UE_LOG(LogFragments, Display,
-        TEXT("[Fragments.Visibility] SetCategoryFilter for model %s: %d categories visible, %d HISMCs, %d visible / %d dimmed instances (dim=%.2f)"),
-        *ModelGuid, VisibleCategories.Num(), HISMCount, VisibleCount, DimmedCount, DimmedAlpha);
+        TEXT("[Fragments.Visibility] SetCategoryFilter for model %s: %d categories visible, %d HISMCs, %d visible / %d dimmed instances (dim=%.2f), %d instance(s) in %d bucket(s) changed"),
+        *ModelGuid, VisibleCategories.Num(), HISMCount, VisibleCount, DimmedCount, DimmedAlpha, ChangedInstances, ChangedBuckets);
 }
 
 void UFragmentsImporterSubsystem::DumpCategories(const FString& ModelGuidOrEmpty) const
