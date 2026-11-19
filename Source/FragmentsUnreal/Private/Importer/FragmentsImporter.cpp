@@ -1,6 +1,7 @@
 // Copyright 2026 Jairo Andres Basto Picott and Arkoun Merchant
 
 #include "Importer/FragmentsImporter.h"
+#include "Engine/Engine.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
@@ -560,7 +561,7 @@ void UFragmentsImporter::RunMeshFinalize(FPendingMeshFinalize& Payload)
 
 	UBodySetup* BodySetup = NewObject<UBodySetup>(M);
 	BodySetup->CollisionTraceFlag = CTF_UseComplexAsSimple;
-	BodySetup->bDoubleSidedGeometry = false;
+	BodySetup->bDoubleSidedGeometry = true;
 	BodySetup->InvalidatePhysicsData();
 	if (Payload.TriMesh.IsValid())
 	{
