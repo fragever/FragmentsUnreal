@@ -561,7 +561,7 @@ void UFragmentsImporter::RunMeshFinalize(FPendingMeshFinalize& Payload)
 
 	UBodySetup* BodySetup = NewObject<UBodySetup>(M);
 	BodySetup->CollisionTraceFlag = CTF_UseComplexAsSimple;
-	BodySetup->bDoubleSidedGeometry = false;
+	BodySetup->bDoubleSidedGeometry = true;
 	BodySetup->InvalidatePhysicsData();
 	if (Payload.TriMesh.IsValid())
 	{
