@@ -6,6 +6,7 @@
 #include "Utils/FragmentsUtils.h"
 #include "Utils/FragmentsLog.h"
 #include "Fragment/Fragment.h"
+#include "Serialization/JsonSerializer.h"
 
 FTransform UFragmentsUtils::MakeTransform(const Transform* FragmentsTransform, bool bIsLocalTransform, bool bIsRootCoordinates)
 {
@@ -143,17 +144,25 @@ TArray<FItemAttribute> UFragmentsUtils::ParseItemAttribute(const Attribute* Attr
 
 		FString RawString = UTF8_TO_TCHAR(Raw->c_str());
 
-		TArray<FString> Tokens;
-		RawString.Replace(TEXT("["), TEXT(""))
-			.Replace(TEXT("]"), TEXT(""))
-			.ParseIntoArray(Tokens, TEXT(","), true);
-
-		if (Tokens.Num() < 3) continue;
-
-		FString Key = Tokens[0].TrimStartAndEnd().Replace(TEXT("\""), TEXT(""));
-		FString Value = Tokens[1].TrimStartAndEnd().Replace(TEXT("\""), TEXT(""));
-		int64 TypeHash = FCString::Atoi(*Tokens[2].TrimStartAndEnd());
-
+		TArray<TSharedPtr<FJsonValue>> Tokens;
+		if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(RawString), Tokens) || Tokens.Num() < 2) continue;
+		FString Key;
+		if (!Tokens[0]->TryGetString(Key)) continue;
+		FString Value;
+		if (!Tokens[1]->TryGetString(Value))
+		{
+			const auto Writer = TJsonWriterFactory<>::Create(&Value);
+			FJsonSerializer::Serialize(Tokens[1].ToSharedRef(), TEXT(""), Writer);
+		}
+		int64 TypeHash = 0;
+		if (Tokens.Num() > 2)
+		{
+			if (!Tokens[2]->TryGetNumber(TypeHash))
+			{
+				FString Type;
+				if (Tokens[2]->TryGetString(Type)) TypeHash = FCString::Atoi64(*Type);
+			}
+		}
 		Parsed.Add(FItemAttribute(Key, Value, TEXT(""), TypeHash));
 	}
 	return Parsed;
@@ -209,6 +218,7 @@ AFragment* UFragmentsUtils::MapModelStructure(const SpatialStructure* InS, AFrag
 
 void UFragmentsUtils::MapModelStructureToData(const SpatialStructure* InS, FFragmentItem& ParentItem, const FString& InheritedCategory)
 {
+	if (!InS) return; // Spatial structure is optional in both wire schemas.
 	// Determine if this node should be stored as a fragment data object
 	const bool bHasLocalId = InS->local_id().has_value();
 	const bool bHasCategory = InS->category() && InS->category()->size() > 0;

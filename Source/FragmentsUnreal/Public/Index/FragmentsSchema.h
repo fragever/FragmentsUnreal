@@ -9,4 +9,21 @@
 // keeps them parsed before the schema.
 #include "CoreMinimal.h"
 #include "StaticMeshResources.h"
-#include "Index/index_generated.h"
+#include "Index/compatibility_generated.h"
+
+/** Wire schema families, not guessed package versions. Both use file identifier 0001. */
+enum class EFragmentSchemaFormat : uint8
+{
+	Invalid,
+	Legacy,
+	Fragments361,
+	ModernWithoutFaceIds,
+	LegacyWithShellExtensions,
+	Shared // Both verifiers accept a file containing only common fields.
+};
+
+namespace FragmentSchema
+{
+	FRAGMENTSUNREAL_API EFragmentSchemaFormat Identify(const uint8* Data, size_t Size);
+	FRAGMENTSUNREAL_API const TCHAR* Name(EFragmentSchemaFormat Format);
+}

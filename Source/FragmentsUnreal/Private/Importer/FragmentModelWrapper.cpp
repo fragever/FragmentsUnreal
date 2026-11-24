@@ -135,11 +135,5 @@ UMaterialInterface* UFragmentModelWrapper::ResolveOverrideMaterial(
 bool UFragmentModelWrapper::IsValidModelBuffer(const TArray<uint8>& Buffer)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(FragWrapper_VerifyModelBuffer);
-	if (Buffer.Num() == 0) { return false; }
-
-	// The default table cap (1M) is below what a large campus model holds, and would reject a valid file.
-	flatbuffers::Verifier::Options Options;
-	Options.max_tables = TNumericLimits<flatbuffers::uoffset_t>::Max();
-	flatbuffers::Verifier Verifier(Buffer.GetData(), static_cast<size_t>(Buffer.Num()), Options);
-	return Verifier.VerifyBuffer<Model>(nullptr);
+	return FragmentSchema::Identify(Buffer.GetData(), Buffer.Num()) != EFragmentSchemaFormat::Invalid;
 }

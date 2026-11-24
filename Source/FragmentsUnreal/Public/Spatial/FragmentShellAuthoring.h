@@ -21,6 +21,8 @@ namespace FragmentShellAuthoring
 
 		/** Profile index -> that profile's hole contours (each an index list). */
 		TMap<int32, TArray<TArray<int32>>> ProfileHoles;
+		/** Optional upstream face grouping, absent in legacy files. */
+		TArray<uint16> ProfileFaceIds;
 
 		bool IsEmpty() const { return Points.Num() == 0 || Profiles.Num() == 0; }
 	};

@@ -9,6 +9,8 @@ notices remain with the corresponding source files:
 * FlatBuffers is included under its upstream license and notices where
   applicable. See ThirdParty/FlatBuffers.
 * zlib is provided by and licensed through the Unreal Engine installation.
+* The Fragments schema is derived from That Open Company engine_fragment,
+  distributed under MIT. See Source/FragmentsUnreal/Public/Index/Schemas/LICENSE.md.
 
 The Apache License in the root LICENSE file applies to original FragmentsUnreal
 code, documentation, and project-authored assets unless a file or directory

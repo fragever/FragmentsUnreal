@@ -107,6 +107,7 @@ The [documentation site](https://www.fragmentsunreal.dev/docs/) covers installat
 - **Platforms**: Windows (Win64). libtess2 libraries for Android ARM64 are included.
 - **Engine plugins**: ProceduralMeshComponent and GeometryScripting (the plugin enables them).
 - **Third-party**: FlatBuffers and libtess2, both bundled. Nothing else to install.
+- **Fragments files**: the original legacy schema and the schema in `@thatopen/fragments` 3.6.1 are supported, including modern exports made before face IDs were added. Raw and zlib-compressed files use the same loader. The Output Log reports the detected schema after decompression; files containing only shared fields are reported as ambiguous rather than assigned a guessed package version.
 
 ## Limits
 
