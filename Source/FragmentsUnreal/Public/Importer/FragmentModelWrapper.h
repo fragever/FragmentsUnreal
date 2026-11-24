@@ -29,6 +29,7 @@ private:
 	FModelBufferPin RawBuffer;
 
 	const Model* ParsedModel = nullptr;
+	EFragmentSchemaFormat SchemaFormat = EFragmentSchemaFormat::Invalid;
 
 	FFragmentItem ModelItem;
 
@@ -59,7 +60,8 @@ public:
 	void LoadModel(TArray<uint8> InBuffer)
 	{
 		RawBuffer = MakeShared<TArray<uint8>, ESPMode::ThreadSafe>(MoveTemp(InBuffer));
-		ParsedModel = IsValidModelBuffer(*RawBuffer) ? GetModel(RawBuffer->GetData()) : nullptr;
+		SchemaFormat = FragmentSchema::Identify(RawBuffer->GetData(), RawBuffer->Num());
+		ParsedModel = SchemaFormat != EFragmentSchemaFormat::Invalid ? GetModel(RawBuffer->GetData()) : nullptr;
 		LocalIdToFlatIndex.Empty();
 		LocalIdToItem.Empty();
 	}
@@ -68,6 +70,7 @@ public:
 	FModelBufferPin GetBufferPin() const { return RawBuffer; }
 
 	const Model* GetParsedModel() const { return ParsedModel; }
+	EFragmentSchemaFormat GetSchemaFormat() const { return SchemaFormat; }
 
 	void SetModelItem(FFragmentItem InModelItem) { ModelItem = InModelItem; LocalIdToItem.Empty(); }
 	FFragmentItem GetModelItem() { return ModelItem; }

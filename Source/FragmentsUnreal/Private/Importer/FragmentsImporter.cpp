@@ -3,6 +3,8 @@
 #include "Importer/FragmentsImporter.h"
 #include "Engine/Engine.h"
 #include "TimerManager.h"
+#include "Misc/ScopeExit.h"
+#include "Serialization/JsonSerializer.h"
 #include "Engine/World.h"
 #include "ProfilingDebugging/CpuProfilerTrace.h"
 #include "ProfilingDebugging/CountersTrace.h"
@@ -1028,6 +1030,14 @@ bool UFragmentsImporter::ReadAndInflate(const FString& FragPath,
 
 	OutDecompressed.Reset();
 	OutError.Reset();
+	ON_SCOPE_EXIT
+	{
+		if (OutError.IsEmpty() && !OutDecompressed.IsEmpty())
+		{
+			UE_LOG(LogFragments, Log, TEXT("Fragments format after decompression: %s (%s)"),
+				FragmentSchema::Name(FragmentSchema::Identify(OutDecompressed.GetData(), OutDecompressed.Num())), *FragPath);
+		}
+	};
 
 	TArray<uint8> CompressedData;
 	{
@@ -1177,6 +1187,7 @@ FString UFragmentsImporter::LoadFragmentFromBuffer(TArray<uint8>&& Decompressed,
 		return FString();
 	}
 
+	UE_LOG(LogFragments, Log, TEXT("Loading %s: %s"), *FragPath, FragmentSchema::Name(Wrapper->GetSchemaFormat()));
 	const auto* guid = ModelRef->guid();
 	const char* RawModelGuid = guid->c_str();
 	FString ModelGuidStr = UTF8_TO_TCHAR(RawModelGuid);
@@ -1885,9 +1896,10 @@ void UFragmentsImporter::CollectPropertiesRecursive(
 	const auto* attributes = InModel->attributes();
 	const auto* relations_items = InModel->relations_items();
 
+	if (!relations || !relations_items) return;
 	for (flatbuffers::uoffset_t i = 0; i < relations_items->size(); i++)
 	{
-		if (relations_items->Get(i) != StartLocalId) continue;
+		if (relations_items->Get(i) != StartLocalId || i >= relations->size()) continue;
 
 		const auto* Relation = relations->Get(i);
 		if (!Relation || !Relation->data()) continue;
@@ -1897,15 +1909,10 @@ void UFragmentsImporter::CollectPropertiesRecursive(
 			const char* RawStr = Relation->data()->Get(j)->c_str();
 			FString Cleaned = UTF8_TO_TCHAR(RawStr);
 
-			TArray<FString> Tokens;
-			Cleaned.Replace(TEXT("["), TEXT(""))
-				.Replace(TEXT("]"), TEXT(""))
-				.ParseIntoArray(Tokens, TEXT(","), true);
-
-			if (Tokens.Num() < 2) continue;
-
-			FString RelationName = Tokens[0].TrimStartAndEnd().Replace(TEXT("\""), TEXT(""));
-
+			TArray<TSharedPtr<FJsonValue>> Tokens;
+			if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Cleaned), Tokens) || Tokens.Num() < 2) continue;
+			FString RelationName;
+			if (!Tokens[0]->TryGetString(RelationName)) continue;
 			// Follow property-related and classification relations (skip purely spatial/geometric ones)
 			static const TSet<FString> AllowedRelations = {
 				TEXT("IsDefinedBy"), TEXT("HasProperties"), TEXT("DefinesType"),
@@ -1918,7 +1925,8 @@ void UFragmentsImporter::CollectPropertiesRecursive(
 
 			for (int32 k = 1; k < Tokens.Num(); ++k)
 			{
-				int64 RelatedLocalId = FCString::Atoi64(*Tokens[k].TrimStartAndEnd());
+				int64 RelatedLocalId = 0;
+				if (!Tokens[k]->TryGetNumber(RelatedLocalId)) continue;
 				if (Visited.Contains(RelatedLocalId)) continue;
 
 				// Try resolving RelatedLocalId to attribute
@@ -2020,129 +2028,35 @@ void UFragmentsImporter::ExtractShellGeometry(
 	TArray<FVector>& OutNormals,
 	TArray<FVector2D>& OutUVs)
 {
-	if (!ShellRef || !ShellRef->points())
+	FragmentShellAuthoring::FShellSource Source;
+	if (!FragmentShellAuthoring::ReadShellSource(ShellRef, Source)) return;
+	const int32 BaseVertex = OutVertices.Num();
+	OutVertices.Append(Source.Points);
+	for (int32 ProfileIndex = 0; ProfileIndex < Source.Profiles.Num(); ++ProfileIndex)
 	{
-		return;
-	}
-
-	const auto* Points = ShellRef->points();
-
-	// Extract vertices (convert from FlatBuffers FloatVector to FVector)
-	for (flatbuffers::uoffset_t i = 0; i < Points->size(); i++)
-	{
-		const auto& P = *Points->Get(i);
-		// Convert: m to cm (×100), swap Y and Z for Unreal coordinate system
-		FVector Vertex(P.x() * 100.0f, P.z() * 100.0f, P.y() * 100.0f);
-		OutVertices.Add(Vertex);
-	}
-
-	// Build hole map (profile_id → hole indices)
-	const auto* Holes = ShellRef->holes();
-	TMap<int32, TArray<TArray<int32>>> ProfileHolesMap;
-
-	if (Holes)
-	{
-		for (flatbuffers::uoffset_t j = 0; j < Holes->size(); j++)
+		const auto& Profile = Source.Profiles[ProfileIndex];
+		if (Profile.Num() < 3) continue;
+		if (const auto* Holes = Source.ProfileHoles.Find(ProfileIndex))
 		{
-			const auto* Hole = Holes->Get(j);
-			const auto* HoleIndices = Hole->indices();
-			const auto Profile_id = Hole->profile_id();
-
-			TArray<int32> HoleIdx;
-			for (flatbuffers::uoffset_t k = 0; k < HoleIndices->size(); k++)
+			TArray<FVector> Vertices;
+			TArray<int32> Indices;
+			if (FragmentShellAuthoring::TriangulatePolygonWithHoles(Source.Points, Profile, *Holes, Vertices, Indices))
 			{
-				HoleIdx.Add(HoleIndices->Get(k));
-			}
-
-			if (ProfileHolesMap.Contains(Profile_id))
-			{
-				ProfileHolesMap[Profile_id].Add(HoleIdx);
-			}
-			else
-			{
-				TArray<TArray<int32>> HolesForProfile;
-				HolesForProfile.Add(HoleIdx);
-				ProfileHolesMap.Add(Profile_id, HolesForProfile);
-			}
-		}
-	}
-
-	// Process profiles
-	const auto* Profiles = ShellRef->profiles();
-	if (!Profiles)
-	{
-		return;
-	}
-
-	for (flatbuffers::uoffset_t i = 0; i < Profiles->size(); i++)
-	{
-		const ShellProfile* Profile = Profiles->Get(i);
-		const auto* Indices = Profile->indices();
-
-		if (!Indices || Indices->size() < 3)
-		{
-			continue;
-		}
-
-		// Check if this profile has holes
-		bool bHasHoles = ProfileHolesMap.Contains(i);
-
-		if (bHasHoles)
-		{
-			// Extract contour indices
-			TArray<int32> ContourIndices;
-			for (flatbuffers::uoffset_t j = 0; j < Indices->size(); j++)
-			{
-				ContourIndices.Add(Indices->Get(j));
-			}
-
-			// Triangulate polygon with holes This creates NEW vertices and indices (not reusing OutVertices!).
-			TArray<FVector> TriangulatedVertices;
-			TArray<int32> TriangulatedIndices;
-
-			if (FragmentShellAuthoring::TriangulatePolygonWithHoles(
-				OutVertices,           // All vertices (for lookup)
-				ContourIndices,        // Contour as indices
-				ProfileHolesMap[i],    // Holes
-				TriangulatedVertices,  // Output: new vertices
-				TriangulatedIndices    // Output: new indices
-			))
-			{
-				// Add triangulated vertices to output
-				int32 VertexOffset = OutVertices.Num();
-				OutVertices.Append(TriangulatedVertices);
-
-				// Adjust indices and add to output
-				for (int32 Idx : TriangulatedIndices)
-				{
-					OutTriangles.Add(VertexOffset + Idx);
-				}
-			}
-			else
-			{
-				UE_LOG(LogFragments, Verbose, TEXT("Triangulation failed for profile %d"), i);
+				const int32 Offset = OutVertices.Num();
+				OutVertices.Append(Vertices);
+				for (int32 Index : Indices) OutTriangles.Add(Offset + Index);
 			}
 		}
 		else
 		{
-			// Simple fan triangulation for convex polygons (no holes)
-			if (Indices->size() >= 3)
+			for (int32 j = 1; j + 1 < Profile.Num(); ++j)
 			{
-				int32 V0 = Indices->Get(0);
-
-				for (flatbuffers::uoffset_t j = 1; j < Indices->size() - 1; j++)
-				{
-					int32 V1 = Indices->Get(j);
-					int32 V2 = Indices->Get(j + 1);
-
-					OutTriangles.Add(V0);
-					OutTriangles.Add(V1);
-					OutTriangles.Add(V2);
-				}
+				OutTriangles.Add(BaseVertex + Profile[0]);
+				OutTriangles.Add(BaseVertex + Profile[j]);
+				OutTriangles.Add(BaseVertex + Profile[j + 1]);
 			}
 		}
 	}
-
 	// Calculate normals (per-face)
 	OutNormals.SetNum(OutVertices.Num());
 	for (int32 i = 0; i < OutTriangles.Num(); i += 3)

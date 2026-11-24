@@ -220,57 +220,46 @@ bool TriangulatePolygonWithHoles(
 
 bool ReadShellSource(const Shell* ShellRef, FShellSource& Out)
 {
-	if (!ShellRef) { return false; }
-
+	Out = FShellSource();
+	if (!ShellRef || !ShellRef->points() || ShellRef->points()->size() == 0) return false;
 	const auto* Points = ShellRef->points();
-	if (!Points || Points->size() == 0) { return false; }
+	Out.Points.Reserve(Points->size());
+	for (const auto* P : *Points)
+		Out.Points.Add(FVector(P->x() * 100.0, P->z() * 100.0, P->y() * 100.0));
 
-	const auto* Profiles = ShellRef->profiles();
-	if (!Profiles || Profiles->size() == 0) { return false; }
-
-	// Coordinate conversion: meters Z-down -> centimeters Z-up.
-	Out.Points.Reset(Points->size());
-	for (flatbuffers::uoffset_t i = 0; i < Points->size(); i++)
+	auto ReadContours = [&](const auto* Profiles, const auto* Holes)
 	{
-		const auto& P = *Points->Get(i);
-		Out.Points.Add(FVector(P.x() * 100.0, P.z() * 100.0, P.y() * 100.0));
-	}
-
-	Out.Profiles.Reset(Profiles->size());
-	for (flatbuffers::uoffset_t i = 0; i < Profiles->size(); i++)
-	{
-		const ShellProfile* Profile = Profiles->Get(i);
-		const auto* Indices = Profile->indices();
-		TArray<int32>& Dst = Out.Profiles.AddDefaulted_GetRef();
-		if (!Indices) { continue; }
-		Dst.Reserve(Indices->size());
-		for (flatbuffers::uoffset_t j = 0; j < Indices->size(); j++)
+		if (!Profiles || Profiles->size() == 0 || !Holes) return false;
+		for (const auto* Profile : *Profiles)
 		{
-			Dst.Add(Indices->Get(j));
-		}
-	}
-
-	// Hole map, mirroring FragmentsImporter.cpp:3495-3520.
-	if (const auto* Holes = ShellRef->holes())
-	{
-		for (flatbuffers::uoffset_t j = 0; j < Holes->size(); j++)
-		{
-			const auto* Hole = Holes->Get(j);
-			const auto* HoleIndices = Hole->indices();
-			if (!HoleIndices) { continue; }
-			TArray<int32> HoleIdx;
-			HoleIdx.Reserve(HoleIndices->size());
-			for (flatbuffers::uoffset_t k = 0; k < HoleIndices->size(); k++)
+			if (!Profile || !Profile->indices()) return false;
+			auto& Dst = Out.Profiles.AddDefaulted_GetRef();
+			for (auto Index : *Profile->indices())
 			{
-				HoleIdx.Add(HoleIndices->Get(k));
+				if (Index >= Points->size() || Index > MAX_int32) return false;
+				Dst.Add(static_cast<int32>(Index));
 			}
-			Out.ProfileHoles.FindOrAdd(Hole->profile_id()).Add(MoveTemp(HoleIdx));
 		}
-	}
-
+		for (const auto* Hole : *Holes)
+		{
+			if (!Hole || !Hole->indices() || Hole->profile_id() >= Profiles->size()) return false;
+			auto& Dst = Out.ProfileHoles.FindOrAdd(Hole->profile_id()).AddDefaulted_GetRef();
+			for (auto Index : *Hole->indices())
+			{
+				if (Index >= Points->size() || Index > MAX_int32) return false;
+				Dst.Add(static_cast<int32>(Index));
+			}
+		}
+		return true;
+	};
+	const bool bRead = ShellRef->type() == ShellType_BIG
+		? ReadContours(ShellRef->big_profiles(), ShellRef->big_holes())
+		: ShellRef->type() == ShellType_NONE && ReadContours(ShellRef->profiles(), ShellRef->holes());
+	if (!bRead) { Out = FShellSource(); return false; }
+	if (const auto* FaceIds = ShellRef->profiles_face_ids())
+		for (auto Id : *FaceIds) Out.ProfileFaceIds.Add(Id);
 	return true;
 }
-
 bool AuthorShellMeshDescription(
 	const FShellSource& Src,
 	const FColor& VertexColor,
